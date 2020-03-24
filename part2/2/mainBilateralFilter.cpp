@@ -6,49 +6,49 @@ typedef pcl::PointXYZI PointT;
 float
  G (float x, float sigma)
  {
-return exp (- (x*x)/(2*sigma*sigma));
+    return exp (- (x*x)/(2*sigma*sigma));
  }
 
 int
 main (int argc, char*argv[])
- {
-std::string incloudfile = argv[1];
-std::string outcloudfile = argv[2];
-float sigma_s = atof (argv[3]);
-float sigma_r = atof (argv[4]);
-// ´ÓpcdÎÄ¼ş¼ÓÔØµãÔÆÊı¾İ
-   pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
-pcl::io::loadPCDFile (incloudfile.c_str (), *cloud);
-int pnumber = (int)cloud->size ();
-// Î´ÂË²¨Ö®Ç°Êä³öµãÔÆÓëÊäÈëµãÔÆÏàµÈ
-   pcl::PointCloud<PointT> outcloud =*cloud;
-// ½¨Á¢kdtree
-   pcl::KdTreeFLANN<PointT>::Ptr tree (new pcl::KdTreeFLANN<PointT>);
-tree->setInputCloud (cloud);
-// ½üÁÚÏà¹Ø´æ´¢
-   std::vector<int> k_indices;
-   std::vector<float> k_distances;
-// ¹Ø¼ü¼ÆËãÑ­»·
-for (int point_id =0; point_id < pnumber; ++point_id)
-   {
-float BF =0;
-float W =0;
-tree->radiusSearch (point_id, 2* sigma_s, k_indices, k_distances);
-// ¶ÔÓÚÃ¿¸ö½üÁÚ½øĞĞÒ»ÏÂ¼ÆËã
-for (size_t n_id =0; n_id < k_indices.size (); ++n_id)
-     {
-float id = k_indices.at (n_id);
-float dist = sqrt (k_distances.at (n_id));
-float intensity_dist = abs (cloud->points[point_id].intensity - cloud->points[id].intensity);
-float w_a = G (dist, sigma_s);
-float w_b = G (intensity_dist, sigma_r);
-float weight = w_a * w_b;
-       BF += weight * cloud->points[id].intensity;
-       W += weight;
-     }
-outcloud.points[point_id].intensity = BF / W;
+{
+    std::string incloudfile = argv[1];
+    std::string outcloudfile = argv[2];
+    float sigma_s = atof (argv[3]);
+    float sigma_r = atof (argv[4]);
+    // ä»pcdæ–‡ä»¶åŠ è½½ç‚¹äº‘æ•°æ®
+    pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
+    pcl::io::loadPCDFile (incloudfile.c_str (), *cloud);
+    int pnumber = (int)cloud->size ();
+    // æœªæ»¤æ³¢ä¹‹å‰è¾“å‡ºç‚¹äº‘ä¸è¾“å…¥ç‚¹äº‘ç›¸ç­‰
+    pcl::PointCloud<PointT> outcloud =*cloud;
+    // å»ºç«‹kdtree
+    pcl::KdTreeFLANN<PointT>::Ptr tree (new pcl::KdTreeFLANN<PointT>);
+    tree->setInputCloud (cloud);
+    // è¿‘é‚»ç›¸å…³å­˜å‚¨
+    std::vector<int> k_indices;
+    std::vector<float> k_distances;
+    // å…³é”®è®¡ç®—å¾ªç¯
+    for (int point_id =0; point_id < pnumber; ++point_id)
+    {
+        float BF =0;
+        float W =0;
+        tree->radiusSearch (point_id, 2* sigma_s, k_indices, k_distances);
+        // å¯¹äºæ¯ä¸ªè¿‘é‚»è¿›è¡Œä¸€ä¸‹è®¡ç®—
+        for (size_t n_id =0; n_id < k_indices.size (); ++n_id)
+        {
+            float id = k_indices.at (n_id);
+            float dist = sqrt (k_distances.at (n_id));
+            float intensity_dist = abs (cloud->points[point_id].intensity - cloud->points[id].intensity);
+            float w_a = G (dist, sigma_s);
+            float w_b = G (intensity_dist, sigma_r);
+            float weight = w_a * w_b;
+            BF += weight * cloud->points[id].intensity;
+            W += weight;
+        }
+        outcloud.points[point_id].intensity = BF / W;
    }
-// ´æ´¢ÂË²¨ºóµÄ½á¹ûµãÔÆµ½ÎÄ¼ş
-pcl::io::savePCDFile (outcloudfile.c_str (), outcloud);
-return (0);
- }
+   // å­˜å‚¨æ»¤æ³¢åçš„ç»“æœç‚¹äº‘åˆ°æ–‡ä»¶
+   pcl::io::savePCDFile (outcloudfile.c_str (), outcloud);
+   return (0);
+}
